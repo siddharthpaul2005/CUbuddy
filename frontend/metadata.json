@@ -1,0 +1,6 @@
+{
+  "name": "CampusPulse - Ranked Campus Events & Arena Hub",
+  "description": "Adrenaline-infused competitive discovery platform for campus tournaments, hackathons, esports showdowns, and live match scoreboards.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

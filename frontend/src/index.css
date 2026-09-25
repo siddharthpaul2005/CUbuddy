@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --brand-lime: #c7f32c;
+    --brand-lime-glow: #d2ff3a;
+    --surface: #131317;
+    --surface-container-lowest: #0e0e12;
+    --surface-container-low: #1b1b1f;
+    --surface-container: #1f1f24;
+    --surface-container-high: #2a292e;
+    --surface-container-highest: #353439;
+  }
+
+  html, body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #0A0A0E;
+    color: #e4e1e7;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  body {
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 12px);
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 8px);
+  }
+}
+
+/* Custom Typography Helpers */
+.font-display {
+  font-family: 'Anton', sans-serif;
+}
+
+.font-anton {
+  font-family: 'Anton', sans-serif;
+}
+
+.font-mono-tech {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Scrollbar Utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Glow Effects */
+.glow-lime {
+  box-shadow: 0 0 16px rgba(199, 243, 44, 0.4);
+}
+
+.glow-lime-sm {
+  box-shadow: 0 0 8px rgba(199, 243, 44, 0.5);
+}
+
+.glow-lime-lg {
+  box-shadow: 0 0 32px rgba(199, 243, 44, 0.35);
+}
+
+.glow-violet {
+  box-shadow: 0 0 16px rgba(139, 92, 246, 0.4);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 16px rgba(6, 182, 212, 0.4);
+}
+
+/* Custom cyber background patterns */
+.bg-grid-pattern {
+  background-size: 28px 28px;
+  background-image: 
+    linear-gradient(to right, rgba(198, 255, 61, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(198, 255, 61, 0.04) 1px, transparent 1px);
+}
+
+.glow-radial {
+  background: radial-gradient(circle 260px at center, rgba(198, 255, 61, 0.14), transparent 75%);
+}
+
+.glow-bottom {
+  background: radial-gradient(circle 320px at 50% 100%, rgba(198, 255, 61, 0.08), transparent 70%);
+}
+
+@keyframes progressGlow {
+  0% { box-shadow: 0 0 6px #C6FF3D, 0 0 16px rgba(198, 255, 61, 0.4); }
+  50% { box-shadow: 0 0 12px #C6FF3D, 0 0 24px rgba(198, 255, 61, 0.7); }
+  100% { box-shadow: 0 0 6px #C6FF3D, 0 0 16px rgba(198, 255, 61, 0.4); }
+}
+
+.neon-pulse-bar {
+  animation: progressGlow 2s ease-in-out infinite;
+}
