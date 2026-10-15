@@ -43,8 +43,8 @@ On phones the event appears when the app is opened, on pull-down-to-refresh, or 
 
 ```powershell
 cd D:\Dev\Projects\CUbuddy\native-app
-npx expo start          # scan the QR code with Expo Go
-npx expo start --tunnel # if phone and laptop can't see each other (e.g. college Wi-Fi)
+npx expo start   # phone and laptop on the same Wi-Fi: scan the QR code with Expo Go
+npm run tunnel   # otherwise (wired laptop, college network): goes through Cloudflare
 ```
 
 Code changes appear on the phone instantly. If a change doesn't show up, stop the server and run `npx expo start --clear`.
