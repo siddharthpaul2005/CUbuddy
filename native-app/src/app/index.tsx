@@ -1,109 +1,105 @@
 import { useState } from 'react';
-import { View, Text, StatusBar, Pressable, Image } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Flame, History, CalendarDays, Trophy, Bell, Activity } from 'lucide-react-native';
-import { SplashScreen } from '../components/SplashScreen';
-import { LiveHubScreen } from '../components/LiveHubScreen';
-import { PastEventsScreen } from '../components/PastEventsScreen';
-import { UpcomingScreen } from '../components/UpcomingScreen';
-import { ProfileScreen } from '../components/ProfileScreen';
-import { USER_PROFILE } from '../data/mockData';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { CalendarDays, Flame, History, Wrench } from 'lucide-react-native';
+import type { Bucket, FeedEvent } from '../lib/types';
+import { colors, radius, space, type } from '../lib/theme';
+import { useBootstrap } from '../hooks/useBootstrap';
+import { FeedScreen } from '../screens/FeedScreen';
+import { EventDetail } from '../components/EventDetail';
 
-type TabType = 'LIVE' | 'PAST' | 'FUTURE' | 'PROFILE';
+const TABS: { bucket: Bucket; label: string; Icon: typeof Flame }[] = [
+  { bucket: 'today', label: 'Today', Icon: Flame },
+  { bucket: 'past', label: 'Past', Icon: History },
+  { bucket: 'upcoming', label: 'Upcoming', Icon: CalendarDays },
+];
 
-export default function App() {
-  const [showSplash, setShowSplash] = useState(true);
-  const [activeTab, setActiveTab] = useState<TabType>('LIVE');
+export default function Home() {
+  const insets = useSafeAreaInsets();
+  const bootstrap = useBootstrap();
+  const [tab, setTab] = useState<Bucket>('today');
+  const [openEvent, setOpenEvent] = useState<FeedEvent | null>(null);
 
-  if (showSplash) {
+  const config = bootstrap.data?.config;
+  if (config?.maintenance_mode) {
     return (
-      <View style={{ flex: 1, backgroundColor: 'black' }}>
-        <StatusBar barStyle="light-content" />
-        <SplashScreen onDismiss={() => setShowSplash(false)} />
+      <View style={[styles.screen, styles.maintenance, { paddingTop: insets.top }]}>
+        <Wrench color={colors.accent} size={40} />
+        <Text style={[type.title, { textAlign: 'center' }]}>Be right back</Text>
+        <Text style={[type.body, { textAlign: 'center' }]}>
+          {config.maintenance_message || 'CUbuddy is being updated.'}
+        </Text>
+        <Pressable onPress={bootstrap.refresh} style={styles.retry}>
+          <Text style={styles.retryText}>Check again</Text>
+        </Pressable>
       </View>
     );
   }
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'LIVE':
-        return <LiveHubScreen onNavigateToPast={() => setActiveTab('PAST')} />;
-      case 'PAST':
-        return <PastEventsScreen />;
-      case 'FUTURE':
-        return <UpcomingScreen />;
-      case 'PROFILE':
-        return <ProfileScreen onOpenSyncScreen={() => setShowSplash(true)} />;
-    }
-  };
-
   return (
-    <SafeAreaView className="flex-1 bg-[#131317]">
-      <StatusBar barStyle="light-content" backgroundColor="#131317" />
-      
-      {/* Header */}
-      <View className="h-14 px-4 flex-row items-center justify-between border-b border-[#2a292e]/40 bg-[#131317]">
-        <Pressable 
-          onPress={() => setActiveTab('LIVE')}
-          className="flex-row items-center gap-2"
-        >
-          {/* App Avatar */}
-          <View className="w-8 h-8 rounded-xl bg-[#0e0e12] border border-[#c7f32c] items-center justify-center">
-            <Activity color="#c7f32c" size={20} strokeWidth={2.5} />
-          </View>
-          <View>
-            <Text className="text-white font-bold uppercase tracking-wider text-base leading-tight">CampusPulse</Text>
-            <Text className="text-[#c7f32c] font-bold text-[9px] uppercase tracking-widest">Live Hub</Text>
-          </View>
-        </Pressable>
-
-        <View className="flex-row items-center gap-3">
-          <Pressable className="w-9 h-9 rounded-full bg-[#1b1b1f] items-center justify-center relative">
-            <Bell color="#d1d5db" size={18} />
-            <View className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#c7f32c]" />
-          </Pressable>
-          <Pressable onPress={() => setActiveTab('PROFILE')} className="relative">
-            <Image 
-              source={{ uri: USER_PROFILE.avatarUrl }} 
-              className="w-8 h-8 rounded-full"
-              style={{ borderWidth: 2, borderColor: '#c7f32c' }}
-            />
-            <View className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#c7f32c] border-2 border-[#131317]" />
-          </Pressable>
+    <View style={[styles.screen, { paddingTop: insets.top }]}>
+      <View style={styles.appBar}>
+        <View style={styles.logo}>
+          <Text style={styles.logoText}>CU</Text>
         </View>
+        <Text style={styles.appName}>
+          CU<Text style={{ color: colors.accent }}>buddy</Text>
+        </Text>
       </View>
 
-      {/* Main Content */}
-      <View className="flex-1 bg-[#07070a]">
-        {renderContent()}
+      <View style={styles.body}>
+        {TABS.map(({ bucket }) => (
+          // All tabs stay mounted so scroll position and filters survive tab switches.
+          <View key={bucket} style={[StyleSheet.absoluteFill, tab !== bucket && styles.hidden]}
+            pointerEvents={tab === bucket ? 'auto' : 'none'}>
+            <FeedScreen bucket={bucket} active={tab === bucket} onOpenEvent={setOpenEvent} />
+          </View>
+        ))}
       </View>
 
-      {/* Bottom Dock Navigation matching frontend */}
-      <View className="h-16 flex-row justify-around items-center bg-[#131317]/95 border-t border-[#2a292e]">
-        <Pressable onPress={() => setActiveTab('LIVE')} className="items-center justify-center min-w-[56px] min-h-[44px]">
-          <Flame color={activeTab === 'LIVE' ? '#c7f32c' : '#9ca3af'} size={20} fill={activeTab === 'LIVE' ? '#c7f32c' : 'none'} />
-          <Text className={`text-[9px] font-mono uppercase tracking-wider mt-0.5 ${activeTab === 'LIVE' ? 'text-[#c7f32c] font-bold' : 'text-gray-400'}`}>Live</Text>
-          {activeTab === 'LIVE' && <View className="w-3 h-0.5 bg-[#c7f32c] rounded-full mt-0.5" style={{ shadowColor: '#c7f32c', shadowOpacity: 0.8, shadowRadius: 4, elevation: 4 }} />}
-        </Pressable>
-        
-        <Pressable onPress={() => setActiveTab('PAST')} className="items-center justify-center min-w-[56px] min-h-[44px]">
-          <History color={activeTab === 'PAST' ? '#c7f32c' : '#9ca3af'} size={20} />
-          <Text className={`text-[9px] font-mono uppercase tracking-wider mt-0.5 ${activeTab === 'PAST' ? 'text-[#c7f32c] font-bold' : 'text-gray-400'}`}>Past</Text>
-          {activeTab === 'PAST' && <View className="w-3 h-0.5 bg-[#c7f32c] rounded-full mt-0.5" style={{ shadowColor: '#c7f32c', shadowOpacity: 0.8, shadowRadius: 4, elevation: 4 }} />}
-        </Pressable>
-        
-        <Pressable onPress={() => setActiveTab('FUTURE')} className="items-center justify-center min-w-[56px] min-h-[44px]">
-          <CalendarDays color={activeTab === 'FUTURE' ? '#c7f32c' : '#9ca3af'} size={20} />
-          <Text className={`text-[9px] font-mono uppercase tracking-wider mt-0.5 ${activeTab === 'FUTURE' ? 'text-[#c7f32c] font-bold' : 'text-gray-400'}`}>Future</Text>
-          {activeTab === 'FUTURE' && <View className="w-3 h-0.5 bg-[#c7f32c] rounded-full mt-0.5" style={{ shadowColor: '#c7f32c', shadowOpacity: 0.8, shadowRadius: 4, elevation: 4 }} />}
-        </Pressable>
-        
-        <Pressable onPress={() => setActiveTab('PROFILE')} className="items-center justify-center min-w-[56px] min-h-[44px]">
-          <Trophy color={activeTab === 'PROFILE' ? '#c7f32c' : '#9ca3af'} size={20} />
-          <Text className={`text-[9px] font-mono uppercase tracking-wider mt-0.5 ${activeTab === 'PROFILE' ? 'text-[#c7f32c] font-bold' : 'text-gray-400'}`}>Profile</Text>
-          {activeTab === 'PROFILE' && <View className="w-3 h-0.5 bg-[#c7f32c] rounded-full mt-0.5" style={{ shadowColor: '#c7f32c', shadowOpacity: 0.8, shadowRadius: 4, elevation: 4 }} />}
-        </Pressable>
+      <View style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, space.sm) }]}>
+        {TABS.map(({ bucket, label, Icon }) => {
+          const selected = tab === bucket;
+          return (
+            <Pressable key={bucket} onPress={() => setTab(bucket)} style={styles.tab}
+              accessibilityRole="tab" accessibilityState={{ selected }} accessibilityLabel={label}>
+              <View style={[styles.tabIcon, selected && styles.tabIconActive]}>
+                <Icon color={selected ? colors.onAccent : colors.textMuted} size={20} />
+              </View>
+              <Text style={[styles.tabLabel, selected && { color: colors.accent }]}>{label}</Text>
+            </Pressable>
+          );
+        })}
       </View>
-    </SafeAreaView>
+
+      <EventDetail event={openEvent} onClose={() => setOpenEvent(null)} />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.bg },
+  appBar: {
+    height: 52, flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingHorizontal: space.lg,
+    borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border,
+  },
+  logo: {
+    width: 30, height: 30, borderRadius: 9, backgroundColor: colors.accent,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  logoText: { color: colors.onAccent, fontWeight: '900', fontSize: 13 },
+  appName: { color: colors.text, fontSize: 19, fontWeight: '800' },
+  body: { flex: 1 },
+  hidden: { opacity: 0 },
+  tabBar: {
+    flexDirection: 'row', paddingTop: space.sm, backgroundColor: colors.surface,
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border,
+  },
+  tab: { flex: 1, alignItems: 'center', gap: 3, minHeight: 48 },
+  tabIcon: { width: 52, height: 30, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  tabIconActive: { backgroundColor: colors.accent },
+  tabLabel: { fontSize: 11, fontWeight: '700', color: colors.textMuted },
+  maintenance: { alignItems: 'center', justifyContent: 'center', gap: space.lg, padding: space.xl },
+  retry: { paddingHorizontal: space.xl, height: 44, justifyContent: 'center', borderRadius: radius.md, backgroundColor: colors.accent },
+  retryText: { color: colors.onAccent, fontWeight: '800' },
+});

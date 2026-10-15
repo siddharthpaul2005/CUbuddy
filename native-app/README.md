@@ -1,56 +1,35 @@
-# Welcome to your Expo app 👋
+# CUbuddy: Student App (Expo)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Shows campus events from the CUbuddy backend in three tabs: **Today**, **Past** (last 4 days) and **Upcoming** (next 15 days). Events can be filtered by club and event type. Tapping an event opens its details, the full poster, a **Save poster** button and a **Register** button (only when the event has a link). No login.
 
-## Get started
+All content comes from the admin panel, so nothing about events is hardcoded here.
 
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Run it
 
 ```bash
-npm run reset-project
+npm install
+npx expo start            # scan the QR with Expo Go
+npx expo start --tunnel   # if the phone can't reach the laptop
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+`.env` holds the public Supabase URL and publishable key. It's committed on purpose: those values ship inside the app anyway.
 
-### Other setup steps
+## Structure
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```
+src/app/            routes (expo-router): _layout.tsx (splash, providers), index.tsx (tabs)
+src/screens/        FeedScreen: one screen used by all three tabs
+src/components/     EventCard, EventDetail, FilterBar, Announcements, StateView
+src/hooks/          useRemote (fetch + refetch on focus), useBootstrap (settings/clubs/types)
+src/lib/            api.ts (backend calls), dates.ts (IST formatting), poster.ts (save to gallery), theme.ts
+```
 
-## Learn more
+Backend API reference: `../backend/README.md`. Shipping the app: `../DEPLOYMENT.md`.
 
-To learn more about developing your project with Expo, look at the following resources:
+## Checks
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+npx tsc --noEmit
+npx expo lint
+npx expo-doctor
+```
