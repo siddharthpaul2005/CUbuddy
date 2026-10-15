@@ -1,17 +1,18 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CalendarDays, Flame, History, Wrench } from 'lucide-react-native';
+import { Flame, History, Wrench } from 'lucide-react-native';
 import type { Bucket, FeedEvent } from '../lib/types';
 import { colors, radius, space, type } from '../lib/theme';
 import { useBootstrap } from '../hooks/useBootstrap';
 import { FeedScreen } from '../screens/FeedScreen';
 import { EventDetail } from '../components/EventDetail';
+import { CalendarArrowRight } from '../components/CalendarArrowRight';
 
-const TABS: { bucket: Bucket; label: string; Icon: typeof Flame }[] = [
-  { bucket: 'today', label: 'Today', Icon: Flame },
-  { bucket: 'past', label: 'Past', Icon: History },
-  { bucket: 'upcoming', label: 'Upcoming', Icon: CalendarDays },
+const TABS: { bucket: Bucket; label: string; Icon: React.ComponentType<{ color: string; size?: number }> }[] = [
+  { bucket: 'today', label: 'LIVE', Icon: Flame },
+  { bucket: 'past', label: 'PAST', Icon: History },
+  { bucket: 'upcoming', label: 'FUTURE', Icon: CalendarArrowRight },
 ];
 
 export default function Home() {
@@ -60,13 +61,20 @@ export default function Home() {
       <View style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, space.sm) }]}>
         {TABS.map(({ bucket, label, Icon }) => {
           const selected = tab === bucket;
+          const itemColor = selected ? colors.accent : colors.textMuted;
           return (
-            <Pressable key={bucket} onPress={() => setTab(bucket)} style={styles.tab}
-              accessibilityRole="tab" accessibilityState={{ selected }} accessibilityLabel={label}>
-              <View style={[styles.tabIcon, selected && styles.tabIconActive]}>
-                <Icon color={selected ? colors.onAccent : colors.textMuted} size={20} />
+            <Pressable
+              key={bucket}
+              onPress={() => setTab(bucket)}
+              style={styles.tab}
+              accessibilityRole="tab"
+              accessibilityState={{ selected }}
+              accessibilityLabel={label}
+            >
+              <View style={styles.tabIcon}>
+                <Icon color={itemColor} size={22} />
               </View>
-              <Text style={[styles.tabLabel, selected && { color: colors.accent }]}>{label}</Text>
+              <Text style={[styles.tabLabel, selected && styles.tabLabelActive]}>{label}</Text>
             </Pressable>
           );
         })}
@@ -92,13 +100,35 @@ const styles = StyleSheet.create({
   body: { flex: 1 },
   hidden: { opacity: 0 },
   tabBar: {
-    flexDirection: 'row', paddingTop: space.sm, backgroundColor: colors.surface,
-    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border,
+    flexDirection: 'row',
+    paddingTop: 10,
+    backgroundColor: colors.surface,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
   },
-  tab: { flex: 1, alignItems: 'center', gap: 3, minHeight: 48 },
-  tabIcon: { width: 52, height: 30, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-  tabIconActive: { backgroundColor: colors.accent },
-  tabLabel: { fontSize: 11, fontWeight: '700', color: colors.textMuted },
+  tab: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    minHeight: 48,
+  },
+  tabIcon: {
+    width: 26,
+    height: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabLabel: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+  },
+  tabLabelActive: {
+    color: colors.accent,
+  },
   maintenance: { alignItems: 'center', justifyContent: 'center', gap: space.lg, padding: space.xl },
   retry: { paddingHorizontal: space.xl, height: 44, justifyContent: 'center', borderRadius: radius.md, backgroundColor: colors.accent },
   retryText: { color: colors.onAccent, fontWeight: '800' },

@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, RefreshControl, ScrollView, SectionList, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, RefreshControl, ScrollView, SectionList, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { getEventFeed } from '../lib/api';
 import type { Bucket, FeedEvent, FeedFilters } from '../lib/types';
-import { colors, space, type } from '../lib/theme';
+import { colors, radius, space, type } from '../lib/theme';
 import { formatDate, hasEnded, isHappeningNow } from '../lib/dates';
 import { useRemote } from '../hooks/useRemote';
 import { useBootstrap } from '../hooks/useBootstrap';
@@ -32,7 +33,7 @@ export function FeedScreen({ bucket, active, onOpenEvent }: Props) {
   const upcomingDays = Number(config.upcoming_days ?? 15);
 
   const [filters, setFilters] = useState<FeedFilters>({ clubId: null, categoryId: null });
-  const [pastDay, setPastDay] = useState<number | null>(null); // e.g. -1 = yesterday
+  const [pastDay, setPastDay] = useState<number | null>(-1); // default to YESTERDAY (-1)
   // Don't fetch a tab until it is first opened.
   const [visited, setVisited] = useState(active);
   if (active && !visited) setVisited(true);
@@ -67,13 +68,67 @@ export function FeedScreen({ bucket, active, onOpenEvent }: Props) {
 
   const header = (
     <View style={styles.header}>
-      <View style={styles.titleBlock}>
-        <View style={styles.titleRow}>
-          <Text style={type.title}>{TITLES[bucket]}</Text>
-          {feed.loading && feed.data ? <ActivityIndicator color={colors.accent} size="small" /> : null}
+      {bucket === 'today' ? (
+        <View style={styles.liveHero}>
+          <Text style={styles.liveHeroTitle}>TODAY'S DROP</Text>
+          <Text style={styles.liveHeroSubtitle}>
+            {feed.data && feed.data.length > 0
+              ? `${feed.data.length} high-stakes campus showdown${feed.data.length === 1 ? '' : 's'} live right now`
+              : '3 high-stakes campus showdowns live right now'}
+          </Text>
+          <View style={styles.liveHeroLine} />
         </View>
-        <Text style={type.meta}>{subtitle}</Text>
-      </View>
+      ) : bucket === 'past' ? (
+        <View style={styles.pastHero}>
+          <Text style={styles.pastHeroTitle}>PAST EVENTS</Text>
+          <Text style={styles.pastHeroSubtitle}>
+            Browse archived campus showdowns & verified scoreboards
+          </Text>
+          <LinearGradient
+            colors={['#c7f32c', 'rgba(199,243,44,0.4)', 'transparent']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.pastHeroLine}
+          />
+        </View>
+      ) : (
+        <View style={styles.upcomingHero}>
+          <View style={styles.upcomingHeaderRow}>
+            <Text style={styles.upcomingHeroTitle}>UPCOMING EVENTS</Text>
+            <View style={styles.fixtureBadge}>
+              <Text style={styles.fixtureBadgeCount}>{feed.data?.length ?? 3}</Text>
+              <Text style={styles.fixtureBadgeText}>
+                {(feed.data?.length ?? 3) === 1 ? 'FIXTURE' : 'FIXTURES'}
+              </Text>
+            </View>
+          </View>
+          <Text style={styles.upcomingHeroSubtitle}>
+            Lock in your spot for upcoming campus tournaments, showdowns & showcases.
+          </Text>
+          <View style={styles.upcomingHeroLine} />
+        </View>
+      )}
+
+      {bucket === 'past' ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dayRow}>
+          {Array.from({ length: pastDays }, (_, i) => -(i + 1)).map((d) => {
+            const active = pastDay === d;
+            return (
+              <Pressable
+                key={d}
+                onPress={() => setPastDay((cur) => (cur === d ? null : d))}
+                style={[styles.pastChip, active && styles.pastChipActive]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+              >
+                <Text style={[styles.pastChipText, active && styles.pastChipTextActive]}>
+                  {pastDayLabel(d).toUpperCase()}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      ) : null}
 
       {bucket === 'today' ? <Announcements items={bootstrap.data?.announcements ?? []} /> : null}
 
@@ -83,15 +138,6 @@ export function FeedScreen({ bucket, active, onOpenEvent }: Props) {
         filters={filters}
         onChange={setFilters}
       />
-
-      {bucket === 'past' ? (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dayRow}>
-          <Chip label="All days" active={pastDay === null} onPress={() => setPastDay(null)} />
-          {Array.from({ length: pastDays }, (_, i) => -(i + 1)).map((d) => (
-            <Chip key={d} label={pastDayLabel(d)} active={pastDay === d} onPress={() => setPastDay(d)} />
-          ))}
-        </ScrollView>
-      ) : null}
     </View>
   );
 
@@ -190,4 +236,180 @@ const styles = StyleSheet.create({
   sectionTitle: { color: colors.textDim, paddingHorizontal: space.lg, paddingTop: space.lg, paddingBottom: space.sm },
   cardWrap: { paddingHorizontal: space.lg, paddingVertical: space.sm },
   staleNote: { textAlign: 'center', padding: space.lg, color: colors.danger, fontSize: 12 },
+  liveHero: {
+    paddingHorizontal: space.lg,
+    alignItems: 'center',
+    paddingTop: space.xs,
+  },
+  liveHeroTitle: {
+    color: '#ffffff',
+    fontSize: 34,
+    fontWeight: '900',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    textAlign: 'center',
+    fontFamily: Platform.select({
+      ios: 'Impact',
+      android: 'sans-serif-condensed',
+      web: 'Impact, Anton, sans-serif',
+      default: 'Impact',
+    }),
+  },
+  liveHeroSubtitle: {
+    color: colors.textMuted,
+    fontSize: 13,
+    textAlign: 'center',
+    marginTop: 4,
+    letterSpacing: 0.2,
+  },
+  liveHeroLine: {
+    width: '100%',
+    height: 2.5,
+    backgroundColor: colors.accent,
+    borderRadius: 999,
+    marginTop: space.md,
+    shadowColor: colors.accent,
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 6,
+  },
+  pastHero: {
+    paddingHorizontal: space.lg,
+    paddingTop: space.xs,
+    alignItems: 'flex-start',
+  },
+  pastHeroTitle: {
+    color: '#ffffff',
+    fontSize: 34,
+    fontWeight: '900',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    textAlign: 'left',
+    fontFamily: Platform.select({
+      ios: 'Impact',
+      android: 'sans-serif-condensed',
+      web: 'Impact, Anton, sans-serif',
+      default: 'Impact',
+    }),
+  },
+  pastHeroSubtitle: {
+    color: colors.textMuted,
+    fontSize: 13,
+    textAlign: 'left',
+    marginTop: 4,
+    letterSpacing: 0.2,
+  },
+  pastHeroLine: {
+    width: '100%',
+    height: 2.5,
+    borderRadius: 999,
+    marginTop: space.md,
+    shadowColor: 'rgba(199,243,44,0.4)',
+    shadowOpacity: 1,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 5,
+  },
+  pastChip: {
+    height: 34,
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    backgroundColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pastChipActive: {
+    backgroundColor: colors.accent,
+    shadowColor: colors.accent,
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 6,
+  },
+  pastChipText: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    color: colors.textMuted,
+  },
+  pastChipTextActive: {
+    color: colors.onAccent,
+    fontWeight: '800',
+  },
+  upcomingHero: {
+    paddingHorizontal: space.lg,
+    paddingTop: space.xs,
+  },
+  upcomingHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space.sm,
+  },
+  upcomingHeroTitle: {
+    flex: 1,
+    color: '#ffffff',
+    fontSize: 34,
+    fontWeight: '900',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    textAlign: 'left',
+    fontFamily: Platform.select({
+      ios: 'Impact',
+      android: 'sans-serif-condensed',
+      web: 'Impact, Anton, sans-serif',
+      default: 'Impact',
+    }),
+    lineHeight: 38,
+  },
+  fixtureBadge: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceRaised,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.accent,
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 3,
+  },
+  fixtureBadgeCount: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: colors.accent,
+    lineHeight: 16,
+  },
+  fixtureBadgeText: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    color: colors.accent,
+    textTransform: 'uppercase',
+    lineHeight: 12,
+  },
+  upcomingHeroSubtitle: {
+    color: colors.textMuted,
+    fontSize: 13,
+    textAlign: 'left',
+    marginTop: 6,
+    letterSpacing: 0.2,
+    lineHeight: 18,
+  },
+  upcomingHeroLine: {
+    width: '100%',
+    height: 2.5,
+    backgroundColor: colors.accent,
+    borderRadius: 999,
+    marginTop: space.md,
+    shadowColor: colors.accent,
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 6,
+  },
 });
