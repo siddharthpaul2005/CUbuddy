@@ -8,11 +8,13 @@ All content comes from the admin panel, so nothing about events is hardcoded her
 
 ```bash
 npm install
-npx expo start            # scan the QR with Expo Go
-npx expo start --tunnel   # if the phone can't reach the laptop
+npx expo start            # phone and laptop on the same Wi-Fi: scan the QR with Expo Go
+npm run tunnel            # anything else (wired laptop, college network): Cloudflare tunnel
 ```
 
 `.env` holds the public Supabase URL and publishable key. It's committed on purpose: those values ship inside the app anyway.
+
+`npm run tunnel` needs cloudflared once: `winget install Cloudflare.cloudflared`. Use it instead of `expo start --tunnel`, whose ngrok connection is often blocked on college networks.
 
 ## Structure
 
